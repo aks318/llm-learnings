@@ -1,0 +1,17 @@
+
+{
+  "users": [
+    {
+      "name": "Aakash",
+      "age": 28
+    },
+    {
+      "name": "Rahul",
+      "age": 25
+    },
+    {
+      "name": "Priya",
+      "age": 30
+    }
+  ]
+}
