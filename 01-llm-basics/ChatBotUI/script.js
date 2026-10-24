@@ -63,27 +63,102 @@ document.addEventListener('DOMContentLoaded', () => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Generate a mock assistant response
-    function generateAssistantResponse() {
-        const responses = [
-            "That's an interesting question! Let me think about how to best explain that to you. I'll provide a comprehensive answer with plenty of detail.",
-            "Thanks for your message. I'm here to help with whatever you need assistance on. Let me break this down for you in a clear and structured way.",
-            "I understand what you're asking. Here's my perspective on that topic: This is an important subject with several key aspects to consider.",
-            "Great question! Based on my knowledge, here's what I can tell you... This is a multifaceted issue that deserves thorough examination.",
-            "I've processed your request and here's a detailed answer: The core concepts involved are quite fascinating and intricate.",
-            "That's a thoughtful inquiry. Here's my analysis on this subject: There are several important considerations we should explore together.",
-            "I appreciate you reaching out about this. Let me provide some insights with additional context and explanation to help you understand better."
-        ];
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
-        // Add more padding/complexity to the response
-        let fullResponse = randomResponse;
-        if (Math.random() > 0.5) {
-            fullResponse += " The explanation involves multiple dimensions that I'll elaborate on in detail. This subject has various interconnected elements that contribute to a complete understanding.";
+    // Send message to backend API
+    async function sendToBackend(message) {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/user_prompt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_prompt: message })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Handle streaming response
+            if (response.headers.get('content-type')?.includes('text/event-stream')) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                let fullResponse = "";
+                let firstChunk = true;
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.trim() === '') continue;
+                        
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.content) {
+                                // For streaming, we'll append to the current message
+                                fullResponse += data.content;
+                                
+                                // Update the UI with partial response
+                                if (firstChunk) {
+                                    // Create new assistant message element if this is first chunk
+                                    addAssistantMessage(fullResponse);
+                                    firstChunk = false;
+                                } else {
+                                    // Update existing message with accumulated content
+                                    const messages = document.querySelectorAll('.assistant-message');
+                                    if (messages.length > 0) {
+                                        const lastMessage = messages[messages.length - 1];
+                                        lastMessage.textContent = fullResponse;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing stream:', e);
+                        }
+                    }
+                }
+                
+                return { content: fullResponse };
+            } else {
+                // Handle non-streaming response (fallback)
+                const data = await response.json();
+                return data;
+            }
+        } catch (error) {
+            console.error('Error sending to backend:', error);
+            throw error;
         }
-        
-        addAssistantMessage(fullResponse);
+    }
+
+    // Generate assistant response by calling backend
+    async function generateAssistantResponse() {
+        try {
+            // Get the last user message from chat history
+            const lastUserMessage = chatHistory[chatHistory.length - 1]?.content || "";
+            
+            // Send to backend and get response
+            const result = await sendToBackend(lastUserMessage);
+            
+            // Add the assistant response to UI (this will be called if not streaming)
+            if (!result.content) {
+                addAssistantMessage("No content received from AI service.");
+            }
+        } catch (error) {
+            console.error('Error in generateAssistantResponse:', error);
+            // Fallback to static response if backend fails
+            const fallbackResponses = [
+                "I apologize, but I'm currently having trouble connecting to the backend service. Here's a general response based on similar queries...",
+                "There seems to be an issue with the connection to the AI service. In the meantime, here's what I can tell you about this topic...",
+                "The system is experiencing temporary difficulties. However, based on my knowledge, I can provide some general insights on your question."
+            ];
+            
+            const fallbackResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+            addAssistantMessage(fallbackResponse);
+        }
     }
 
     // Event listeners for sending messages
