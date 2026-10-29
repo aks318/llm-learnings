@@ -58,4 +58,4 @@ main_chain = parallel_chain | prompt | model |parser
 
 result = main_chain.invoke("Can you summarize the video")
 
-print(result.content)
+print(result)
