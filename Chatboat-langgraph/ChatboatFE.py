@@ -1,7 +1,7 @@
 from importlib import metadata
 
 import streamlit as st
-from ChatboatBE import chatbot
+from ChatboatBE import chatbot, retrieve_all_thread_func
 from langchain_core.messages import HumanMessage
 import uuid
 
@@ -45,7 +45,7 @@ if "thread_id" not in st.session_state:
     st.session_state["thread_id"] = generate_thread_id()
 
 if 'chat_threads' not in st.session_state:
-    st.session_state['chat_threads'] = []
+    st.session_state['chat_threads'] = retrieve_all_thread_func()
 
 add_thread(st.session_state["thread_id"])
 
