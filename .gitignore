@@ -131,6 +131,8 @@ data/external/
 *.sqlite
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
 chroma_db/
 .qdrant/
 vector_store/
