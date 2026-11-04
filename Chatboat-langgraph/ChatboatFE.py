@@ -1,9 +1,11 @@
-from importlib import metadata
+from dotenv import load_dotenv
 
 import streamlit as st
 from ChatboatBE import chatbot, retrieve_all_thread_func
 from langchain_core.messages import HumanMessage
 import uuid
+
+load_dotenv()
 
 # === utility fubnction===========
 
@@ -65,7 +67,11 @@ for message in st.session_state['message_history']:
     with st.chat_message(message['role']):
         st.text(message['content'])
 
-CONFIG = {'configurable': {'thread_id': st.session_state['thread_id']}}
+CONFIG = {
+    'configurable': {'thread_id': st.session_state['thread_id']},
+    'metadata':  {'thread_id': st.session_state['thread_id']},
+    'run_name': 'chat_run'
+    }
 
 user_input = st.chat_input('Type here')
 
@@ -75,8 +81,6 @@ if user_input:
     st.session_state['message_history'].append({'role': 'user', 'content': user_input})
     with st.chat_message('user'):
         st.text(user_input)
-
-    # response = chatbot.invoke({'messages': [HumanMessage(content=user_input)]}, config=CONFIG)
     
     # ai_message = response['messages'][-1].content
     # first add the message to message_history

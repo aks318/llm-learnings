@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+
+
 from langgraph.graph import StateGraph, END, START
 from langgraph.graph.message import add_messages
 
@@ -8,6 +12,7 @@ from typing import TypedDict, Annotated
 from langgraph.checkpoint.sqlite import SqliteSaver
 import sqlite3
 
+load_dotenv()
 class ChatState(TypedDict):
 
     messages: Annotated[list[BaseMessage], add_messages]
