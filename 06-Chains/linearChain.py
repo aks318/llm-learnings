@@ -7,7 +7,8 @@ model = ChatOllama(model="llama3.2:1b")
 parser = StrOutputParser()
 
 template = PromptTemplate(
-    template="Give me 2 facts about AI"
+    template="Give me 2 facts about {topic}",
+    input_variables= ["topic"]
 )
 
 template2 = PromptTemplate(
@@ -17,7 +18,7 @@ template2 = PromptTemplate(
 
 chain = template | model | parser | template2 | model | parser
 
-result = chain.invoke({})
+result = chain.invoke({"topic" : "Books"})
 
 print(result)
 
